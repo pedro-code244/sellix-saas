@@ -1,0 +1,509 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import authenticate, login as auth_login
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+import yfinance as yf
+import json
+from django.db.models import Sum
+from django.utils.timezone import now
+from datetime import timedelta
+
+
+from .models import Company, Funcionario, Membership, TableItem, Venda, Cliente
+
+
+# -----------------------
+# PÁGINAS PÚBLICAS
+# -----------------------
+
+def index(request):
+    return render(request, 'core/index.html')
+
+
+def modulos(request):
+    return render(request, 'core/modulos.html')
+
+def sellix(request):
+    return render(request, 'core/sellix.html')
+
+def bloqueio(request):
+    return render(request, 'core/bloqueio.html')
+
+
+def politica(request):
+    return render(request, 'core/politica.html')
+
+
+# -----------------------
+# LOGIN
+# -----------------------
+
+def login_view(request):
+
+    if request.method == 'POST':
+
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        user = authenticate(
+            request,
+            username=username,
+            password=password
+        )
+
+        # 1. primeiro verifica se user existe
+        if user is None:
+            return render(request, 'core/login.html', {
+                'error': 'Login inválido, tente novamente'
+            })
+
+        # Superuser deve conseguir logar mesmo sem membership ou bloqueio
+        if user.is_superuser:
+            auth_login(request, user)
+            return redirect('controle')
+
+        # 2. pega membership com segurança
+        membership = Membership.objects.filter(user=user).first()
+
+        if not membership:
+            return render(request, "core/bloqueio.html", {"username": user.username})
+
+        # 3. verifica se está ativo (superuser pula essa verificação acima)
+        if not membership.is_active:
+            return render(request, "core/bloqueio.html", {"username": user.username})
+
+        # 4. login
+        auth_login(request, user)
+
+        # 5. redirect
+        if user.is_superuser:
+            return redirect('controle')
+
+        return redirect('dashboard')
+
+    return render(request, 'core/login.html')
+
+
+# -----------------------
+# CADASTRO
+# -----------------------
+
+def cadastro(request):
+
+    if request.method == 'POST':
+
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        description = request.POST.get('descricao')
+        contato = request.POST.get('contato')
+
+        if User.objects.filter(username=username).exists():
+            return render(request, 'core/cadastro.html', {
+                'error': 'Usuário já existe'
+            })
+
+        user = User.objects.create_user(
+            username=username,
+            password=password
+        )
+
+        company = Company.objects.create(
+            name=username,
+            description=description,
+            contato=contato
+        )
+
+        Membership.objects.create(
+            user=user,
+            company=company,
+            is_admin=True
+        )
+
+        auth_login(request, user)
+
+        return redirect('dashboard')
+
+    return render(request, 'core/cadastro.html')
+
+
+# -----------------------
+# DASHBOARD
+# -----------------------
+@login_required
+def dashboard(request):
+
+    membership = Membership.objects.filter(user=request.user).first()
+
+
+    if not membership:
+        return redirect('bloqueio')
+
+    company = membership.company
+
+    # ATUALIZA NOME DA EMPRESA (opcional)
+    if request.method == "POST":
+        new_name = request.POST.get("name")
+        if new_name:
+            company.name = new_name
+            company.save()
+
+        
+
+     # Dólar (USD/BRL)
+    usd = yf.Ticker("USDBRL=X")
+    usd_price = usd.history(period="1d")["Close"].iloc[-1]
+
+    # Euro (EUR/BRL)
+    eur = yf.Ticker("EURBRL=X")
+    eur_price = eur.history(period="1d")["Close"].iloc[-1]
+
+    context = {
+        "usd_price": round(usd_price, 2),
+        "eur_price": round(eur_price, 2),
+    }
+
+     # Dólar (USD/BRL)
+    usd = yf.Ticker("USDBRL=X")
+    usd_price = usd.history(period="1d")["Close"].iloc[-1]
+
+    # Euro (EUR/BRL)
+    eur = yf.Ticker("EURBRL=X")
+    eur_price = eur.history(period="1d")["Close"].iloc[-1]
+
+    context = {
+        "usd_price": round(usd_price, 2),
+        "eur_price": round(eur_price, 2),
+    }
+
+    vendas = Venda.objects.filter(company=company).order_by("data")
+
+    # GRÁFICO DE VENDAS - agregar por mês (YYYY-MM)
+    month_sums = {}
+    for v in vendas:
+        key = v.data.strftime("%Y-%m")
+        if key not in month_sums:
+            month_sums[key] = {"valor": 0.0, "gastos": 0.0}
+        month_sums[key]["valor"] += float(v.valor or 0)
+        month_sums[key]["gastos"] += float(v.gastos or 0)
+
+    labels = list(month_sums.keys())
+    values = [round(month_sums[k]["valor"], 2) for k in labels]
+    gastos_values = [round(month_sums[k]["gastos"], 2) for k in labels]
+
+    grafico = {
+        "vendas": vendas,
+        "labels": json.dumps(labels),
+        "values": json.dumps(values),
+        "gastos": json.dumps(gastos_values),
+    }
+
+    return render(request, "core/dashboard.html", {
+        "company": company,
+        "items": TableItem.objects.filter(company=company),
+        "funcionarios": Funcionario.objects.filter(company=company),
+        "vendas": Venda.objects.filter(company=company),
+        'clientes': Cliente.objects.filter(company=company),
+        **context,
+        **grafico
+        
+    })
+
+# -----------------------
+# PRODUTOS
+# -----------------------
+
+@login_required
+def add_item(request):
+
+    if request.method == "POST":
+
+        membership = Membership.objects.filter(user=request.user).first()
+
+        if not membership:
+            return redirect('dashboard')
+
+        company = membership.company
+
+        produto = request.POST.get("produto")
+        preco = request.POST.get("preco")
+
+        if produto and preco:
+
+            TableItem.objects.create(
+                company=company,
+                nome=produto,
+                preco=preco,
+            )
+
+    return redirect('dashboard')
+
+
+def deletar_item(request, id):
+    produto = get_object_or_404(TableItem, id=id)
+    produto.delete()
+    return redirect('dashboard')
+
+
+# -----------------------
+# FUNCIONÁRIOS
+# -----------------------
+
+@login_required
+def add_funcionario(request):
+
+    if request.method == "POST":
+
+        membership = Membership.objects.filter(user=request.user).first()
+        if not membership:
+            return redirect('dashboard')
+
+        company = membership.company
+
+        nome = request.POST.get("nome")
+        cargo = request.POST.get("cargo")
+
+        if nome and cargo:  # 👈 EVITA ERRO
+            Funcionario.objects.create(
+                company=company,
+                nome=nome,
+                cargo=cargo
+            )
+
+    return redirect('dashboard')
+
+
+def deletar_funcionario(request, id):
+    funcionario = get_object_or_404(Funcionario, id=id)
+    funcionario.delete()
+    return redirect('dashboard')
+
+# -----------------------
+# VENDAS
+# -----------------------
+
+@login_required
+def add_venda(request):
+
+    if request.method == "POST":
+
+        membership = Membership.objects.filter(user=request.user).first()
+        if not membership:
+            return redirect('dashboard')
+
+        company = membership.company
+
+        valor = request.POST.get("valor")
+        mes = request.POST.get("mes")
+        gastos = request.POST.get("gastos")
+
+        if valor and mes:
+            Venda.objects.create(
+                company=company,
+                valor=float(valor),
+                data=mes,
+                gastos=float(gastos),
+            )
+
+    return redirect("dashboard")
+
+def deletar_venda(request, id):
+    venda = get_object_or_404(Venda, id=id)
+    venda.delete()
+    return redirect('dashboard')
+
+
+
+
+
+@login_required
+def add_cliente(request):
+
+    if request.method == "POST":
+
+        membership = Membership.objects.filter(user=request.user).first()
+
+        if not membership:
+            return redirect('dashboard')
+
+        company = membership.company
+
+        nome = request.POST.get("nome")
+        contato = request.POST.get("contato")
+
+        if nome and contato:
+            Cliente.objects.create(
+                company=company,
+                nome=nome,
+                contato=contato
+            )
+
+    return redirect("dashboard")
+
+
+def deletar_cliente(request, id):
+    cliente = get_object_or_404(Cliente, id=id)
+    cliente.delete()
+    return redirect('dashboard')
+
+# -----------------------
+# CONTROLE (ADMIN)
+# -----------------------
+
+@login_required
+def controle(request):
+
+    if not request.user.is_superuser:
+        return redirect('dashboard')
+
+    usuarios = User.objects.all()
+    usuarios_com_contato = []
+    
+    for u in usuarios:
+        membership = Membership.objects.filter(user=u).first()
+        company = membership.company if membership else None
+        usuarios_com_contato.append({
+            'user': u,
+            'company': company
+        })
+
+    return render(request, 'core/controle.html', {
+        'usuarios_com_contato': usuarios_com_contato
+    })
+
+
+@login_required
+def deletar_usuario(request, user_id):
+
+    if not request.user.is_superuser:
+        return redirect('dashboard')
+
+    user = get_object_or_404(User, id=user_id)
+
+    # Não permitir exclusão de superuser
+    if user.is_superuser:
+        return redirect('controle')
+
+    if request.method == 'POST':
+        user.delete()
+
+    return redirect('controle')
+
+
+@login_required
+def lista_contas(request):
+    contas = Membership.objects.all()
+    return render(request, "core/lista_contas.html", {"contas": contas})
+
+
+@login_required
+def toggle_conta(request, id):
+    conta = get_object_or_404(Membership, id=id)
+
+    # Não permitir desativar/ativar conta de superuser
+    if conta.user.is_superuser:
+        return redirect("lista_contas")
+
+    conta.is_active = not conta.is_active
+    conta.save()
+
+    return redirect("lista_contas")
+
+
+# -----------------------
+# RELATÓRIO MENSAL (IA)     
+# -----------------------
+
+@login_required
+def relatorio_mensal(request, company_id):
+      
+    empresa = get_object_or_404(Company, id=company_id)
+    vendas = Venda.objects.filter(company=empresa)
+    funcionarios = Funcionario.objects.filter(company=empresa)
+    quantidade_funcionarios = funcionarios.count()
+    gastos = Venda.objects.filter(company=empresa).aggregate(total_gastos=Sum("gastos"))["total_gastos"] or 0
+
+    # Agrupar séries mensais (YYYY-MM) para relatório e gráfico
+    month_sums = {}
+    for v in vendas.order_by('data'):
+        key = v.data.strftime("%Y-%m")
+        if key not in month_sums:
+            month_sums[key] = {"valor": 0.0, "gastos": 0.0}
+        month_sums[key]["valor"] += float(v.valor or 0)
+        month_sums[key]["gastos"] += float(v.gastos or 0)
+
+    meses = list(month_sums.keys())
+    vendas_series = [round(month_sums[k]["valor"], 2) for k in meses]
+    gastos_series = [round(month_sums[k]["gastos"], 2) for k in meses]
+
+
+    # Pegar o faturamento do mês atual e do mês anterior
+    #------------------------------------------------------
+
+    hoje = now().date()
+    inicio_mes_atual = hoje.replace(day=1)
+    inicio_mes_anterior = (inicio_mes_atual - timedelta(days=1)).replace(day=1)
+    fim_mes_anterior = inicio_mes_atual
+
+    faturamento_atual = vendas.filter(
+        data__gte=inicio_mes_atual
+    ).aggregate(total=Sum("valor"))["total"] or 0
+
+    faturamento_passado = vendas.filter(
+        data__gte=inicio_mes_anterior,
+        data__lt=fim_mes_anterior
+    ).aggregate(total=Sum("valor"))["total"] or 0
+
+    # Gastos do mês atual e mês passado
+    gasto_atual = vendas.filter(
+        data__gte=inicio_mes_atual
+    ).aggregate(total=Sum("gastos"))["total"] or 0
+
+    gasto_passado = vendas.filter(
+        data__gte=inicio_mes_anterior,
+        data__lt=fim_mes_anterior
+    ).aggregate(total=Sum("gastos"))["total"] or 0
+
+    #--------------------------------
+    # Ver o crescimento da empresa
+    #--------------------------------
+
+    if faturamento_atual > faturamento_passado:
+        crescimento = "Positivo"
+
+    elif faturamento_atual < faturamento_passado:
+        crescimento = "Negativo"
+
+    else:
+        crescimento = "Estável"
+
+
+    lucro = faturamento_atual - gasto_atual
+
+    relatorio = f"""
+Relatório Mensal
+
+Empresa: {empresa.name}
+
+- Faturamento do Mês Atual: R$ {faturamento_atual}
+- Faturamento do Mês Passado: R$ {faturamento_passado}
+- Crescimento mensal de cada mês: {crescimento}
+- Quantidade de Funcionários: {quantidade_funcionarios}
+- Gastos do Mês Atual: R$ {gasto_atual}
+- Gastos do Mês Passado: R$ {gasto_passado}
+- Lucro do Mês Atual: R$ {lucro}
+    """
+
+    contexto = {
+        "relatorio": relatorio,
+        "atual": faturamento_atual,
+        "passado": faturamento_passado,
+        "quantidade_funcionarios": quantidade_funcionarios,
+        "gasto_atual": gasto_atual,
+        "gasto_passado": gasto_passado,
+        "meses": meses,
+        "vendas_series": vendas_series,
+        "gastos_series": gastos_series,
+        "company": empresa
+    }
+
+    return render(request, "core/relatorio.html", contexto)

@@ -1,0 +1,143 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/x-icon" sizes="32x32" href="{% static 'img/favicon.ico' %}">
+    <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}">
+
+<title>Sellix | Evolução</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b0b0b;
+    color: white;
+}
+
+/* HERO */
+.hero {
+    text-align: center;
+    padding: 100px 20px 60px;
+}
+
+.hero small {
+    color: #00ff99;
+    letter-spacing: 2px;
+}
+
+.hero h1 {
+    font-size: 48px;
+    margin-top: 10px;
+}
+
+/* GRID */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 60px 40px;
+}
+
+/* CARD */
+.card {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 16px;
+    padding: 25px;
+    transition: 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    border-color: #00ff99;
+}
+
+.icon {
+    width: 40px;
+    height: 40px;
+    background: #1a1a1a;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+/* CTA */
+.cta {
+    margin: 60px auto;
+    max-width: 900px;
+    background: #111;
+    border: 1px solid #222;
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+}
+
+.btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 12px 24px;
+    background: #00ff99;
+    color: black;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.btn:hover {
+    background: #00cc77;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="hero">
+    <small>VOCÊ SE IDENTIFICA COM ISSO?</small>
+    <h1>Iniciar um negócio em 2026 é exaustivo.</h1>
+</div>
+
+<div class="grid">
+
+    <div class="card">
+        <div class="icon">💻</div>
+        <h3>Falta de suporte real</h3>
+        <p>Você tenta resolver tudo sozinho e perde horas em problemas simples que já têm solução.</p>
+    </div>
+
+    <div class="card">
+        <div class="icon">📁</div>
+        <h3>Falta de direção clara</h3>
+        <p>Você estuda muito, mas não sabe exatamente o que fazer para evoluir de forma consistente.</p>
+    </div>
+
+    <div class="card">
+        <div class="icon">📉</div>
+        <h3>Progresso inconsistente</h3>
+        <p>Você trabalha, mas sente que não está construindo nada sólido ou escalável.</p>
+    </div>
+
+</div>
+
+<div class="cta">
+
+    <h2>Você não precisa continuar assim.</h2>
+
+    <p>
+        Existe um caminho mais inteligente com estrutura, segurança e prática real.
+    </p>
+
+    <a class="btn" href="{% url 'cadastro' %}">
+        Quero mudar isso →
+    </a>
+
+</div>
+
+</body>
+</html>

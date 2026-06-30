@@ -1,0 +1,209 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sellix | SAAS</title>
+
+   <link rel="icon" type="image/x-icon" sizes="32x32" href="{% static 'img/favicon.ico' %}">
+    <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+
+    <style>
+        body {
+            background: black;
+            color: #fff;
+            display: flex;
+            font-family:'Inter', sans-serif;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background:#0d0d0d;
+            font-family:'Inter', sans-serif;
+            color: white;
+            height: 60vh;
+            width: 350px;
+            border:1px solid #1f1f1f;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 195, 0, 0.08);
+            animation: floatIn 0.7s ease;
+        }
+
+        input {
+            width: 300px;
+            padding:16px;
+            border-radius:14px;
+            border:1px solid #232323;
+            background:#111;
+            color:white;
+            font-size:16px;
+            outline:none;
+            margin: 10px 0;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            border-color: rgb(0, 195, 0);
+            box-shadow:0 0 0 4px rgba(173, 184, 180, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-container input {
+            margin: 10px 0;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: rgb(0, 195, 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            width: auto;
+            margin: 0;
+            height: auto;
+            transition: transform 0.2s ease;
+        }
+
+        .password-toggle:hover {
+            background: none;
+            width: auto;
+            box-shadow: none;
+            transform: scale(1.08);
+        }
+
+        p {
+            font-family: 'VT323', monospace;
+        }
+
+        button {
+            height: 4vh;
+            width: 80%;
+            border-radius: 5px;
+            margin-top: 10px;
+            background: rgb(0, 195, 0);
+            border: none;
+            box-shadow: 0px 4px 10px rgb(50, 50, 50);
+            cursor: pointer;
+            color: white;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: rgb(0, 152, 0);
+            box-shadow: 0px 4px 10px rgb(30, 30, 30);
+            height: 4vh;
+            width: 85%;
+            transform: translateY(-1px);
+        }
+
+        a {
+            color: rgb(0, 195, 0);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        a:hover {
+            color: rgb(0, 220, 0);
+        }
+
+        .container2 {
+            background: rgb(54, 54, 54);
+            padding: 10px;
+            background: rgba(255, 0, 0, 0.304);
+            border-radius: 5px;
+            width: 80%;
+            margin-top: 10px;
+            border: solid rgba(255, 0, 0, 0.416);
+            border-radius: 10px;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes floatIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            50% { transform: translateX(2px); }
+            75% { transform: translateX(-2px); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Seja bem-vindo à <span style="color: rgb(0, 195, 0);">Sellix</span></h1> 
+
+    <form method="POST">
+        {% csrf_token %}
+    <div class="container">
+            <h1>Faça o <span style="color: rgb(0, 195, 0);">Login</span></h1>
+
+            <input type="text" name="username" placeholder="Digite seu e-mail ou usuário" required>
+
+            <div class="password-container">
+                <input type="password" id="password" name="password" placeholder="Digite sua senha" required>
+                <button type="button" class="password-toggle" onclick="togglePassword()">
+                    <i data-lucide="eye" id="eyeIcon"></i>
+                </button>
+            </div>
+            {% if error %}
+            <div class="container2">
+                <p style="color:red;">{{ error }}</p>
+            </div>
+            {% endif %}
+            <button>Entrar</button>
+            <p>Ainda não tem uma conta? <a href="{% url 'cadastro' %}">Cadastre-se</a></p>
+    </div>    
+    </form>
+
+    <script>
+        lucide.createIcons();
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.setAttribute('data-lucide', 'eye');
+            }
+            
+            lucide.createIcons();
+        }
+    </script>
+
+</body>
+</html>
