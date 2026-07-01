@@ -33,7 +33,9 @@ SECRET_KEY = 'django-insecure-a=n=ux9fs!fnx&5te_abe)_=m0#yyz@mz1m-75-(_nn+*9vti^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+'localhost',
+'https://sellix-saas.onrender.com/',]
 
 # segurança no login
 LOGIN_URL = '/login/'
