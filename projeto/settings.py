@@ -14,11 +14,6 @@ from pathlib import Path
 import os
 import dj_database_url
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://sellix_dados_user:0eHLIVtCDsMRIBcdpGEv911d6u9KbylA@dpg-d850ankvikkc739gbmtg-a.ohio-postgres.render.com/sellix_dados'
-    )
-}
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-a=n=ux9fs!fnx&5te_abe)_=m0#yyz@mz1m-75-(_nn+*9vti^'
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# segurança no deploy
 DEBUG = False
 
 ALLOWED_HOSTS = [
@@ -47,6 +42,9 @@ CSRF_TRUSTED_ORIGINS = [
 # segurança no login
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
+
+SESSION_COOKIE_AGE = 1209600  # 2 semanas
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 
 # Application definition
@@ -95,12 +93,17 @@ WSGI_APPLICATION = 'projeto.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if os.getenv("DATABASE"):
+    DATABASES = {
+        "default": dj_database_url.config()
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # Password validation

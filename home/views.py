@@ -94,7 +94,6 @@ def cadastro(request):
 
         username = request.POST.get('username')
         password = request.POST.get('password')
-        description = request.POST.get('descricao')
         contato = request.POST.get('contato')
 
         if User.objects.filter(username=username).exists():
@@ -109,7 +108,6 @@ def cadastro(request):
 
         company = Company.objects.create(
             name=username,
-            description=description,
             contato=contato
         )
 
