@@ -1,0 +1,109 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ company.name }} | Relatório</title>
+
+    <link rel="icon" href="{% static 'ico/favicon.ico' %}" type="image/x-icon">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            padding: 30px;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            color: #38bdf8;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 20px;
+        }
+
+        .box {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 10px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            border: 1px solid #334155;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .positivo {
+            background: #16a34a;
+            color: white;
+        }
+
+        .baixo {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn {
+            margin-top: 20px;
+            display: inline-block;
+            padding: 10px 15px;
+            background: #38bdf8;
+            color: black;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background: #0ea5e9;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+
+        <h1>📊 Relatório Mensal</h1>
+
+        <p class="subtitle">
+            Análise automática da performance da empresa
+        </p>
+
+        <div class="box">
+            {{ relatorio }}
+        </div>
+
+        <a href="/dashboard/" class="btn">⬅ Voltar ao Dashboard</a>
+
+    </div>
+
+</div>
+
+</body>
+</html>
