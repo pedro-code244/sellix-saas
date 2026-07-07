@@ -7,6 +7,9 @@ import json
 from django.db.models import Sum
 from django.utils.timezone import now
 from datetime import timedelta
+from rest_framework.decorators import api_view 
+from rest_framework.response import Response
+import requests
 
 
 from .models import Company, Funcionario, Membership, TableItem, Venda, Cliente
@@ -413,12 +416,28 @@ def toggle_conta(request, id):
 
 @login_required
 def relatorio_mensal(request, company_id):
-      
-    empresa = get_object_or_404(Company, id=company_id)
-    vendas = Venda.objects.filter(company=empresa)
-    funcionarios = Funcionario.objects.filter(company=empresa)
+    company = get_object_or_404(Company, id=company_id)
+
+    url = f"http://localhost:8000/api/relatorio/{company.id}/"
+
+    resposta = requests.get(url)
+
+    relatorio = resposta.json()
+    return render(request, "core/relatorio.html", {"company": company, "dados": relatorio})
+
+
+# -----------------------
+#         APIs
+# -----------------------
+
+@api_view(['GET'])
+def api_relatorio_mensal(request, company_id):
+    company = get_object_or_404(Company, id=company_id)
+    
+    vendas = Venda.objects.filter(company=company)
+    funcionarios = Funcionario.objects.filter(company=company)
     quantidade_funcionarios = funcionarios.count()
-    gastos = Venda.objects.filter(company=empresa).aggregate(total_gastos=Sum("gastos"))["total_gastos"] or 0
+    gastos = Venda.objects.filter(company=company).aggregate(total_gastos=Sum("gastos"))["total_gastos"] or 0
 
     # Agrupar séries mensais (YYYY-MM) para relatório e gráfico
     month_sums = {}
@@ -477,31 +496,15 @@ def relatorio_mensal(request, company_id):
 
     lucro = faturamento_atual - gasto_atual
 
-    relatorio = f"""
-Relatório Mensal
 
-Empresa: {empresa.name}
-
-- Faturamento do Mês Atual: R$ {faturamento_atual}
-- Faturamento do Mês Passado: R$ {faturamento_passado}
-- Crescimento mensal de cada mês: {crescimento}
-- Quantidade de Funcionários: {quantidade_funcionarios}
-- Gastos do Mês Atual: R$ {gasto_atual}
-- Gastos do Mês Passado: R$ {gasto_passado}
-- Lucro do Mês Atual: R$ {lucro}
-    """
-
-    contexto = {
-        "relatorio": relatorio,
-        "atual": faturamento_atual,
-        "passado": faturamento_passado,
+    relatorio = {
+        "faturamento_atual": faturamento_atual,
+        "faturamento_passado": faturamento_passado,
+        "crescimento": crescimento,
         "quantidade_funcionarios": quantidade_funcionarios,
         "gasto_atual": gasto_atual,
         "gasto_passado": gasto_passado,
-        "meses": meses,
-        "vendas_series": vendas_series,
-        "gastos_series": gastos_series,
-        "company": empresa
+        "lucro": lucro,
     }
-
-    return render(request, "core/relatorio.html", contexto)
+    
+    return Response(relatorio)

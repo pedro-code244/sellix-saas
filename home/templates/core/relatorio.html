@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <title>{{ company.name }} | Relatório</title>
@@ -8,102 +9,336 @@
     <link rel="icon" href="{% static 'ico/favicon.ico' %}" type="image/x-icon">
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+
+            background: #050505;
+            color: #e5e7eb;
+            min-height: 100vh;
         }
 
         .container {
-            max-width: 900px;
+
+            max-width: 1200px;
             margin: auto;
-            padding: 30px;
+            padding: 40px 20px;
         }
 
-        .card {
-            background: #1e293b;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 35px;
         }
 
-        h1 {
-            margin-bottom: 10px;
-            color: #38bdf8;
+        .header h1 {
+
+            color: white;
+            font-size: 34px;
+
         }
 
         .subtitle {
-            color: #94a3b8;
-            margin-bottom: 20px;
-        }
-
-        .box {
-            background: #0f172a;
-            padding: 15px;
-            border-radius: 10px;
-            white-space: pre-wrap;
-            line-height: 1.6;
-            border: 1px solid #334155;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            margin-top: 10px;
-        }
-
-        .positivo {
-            background: #16a34a;
-            color: white;
-        }
-
-        .baixo {
-            background: #dc2626;
-            color: white;
+            color: #9ca3af;
+            margin-top: 8px;
         }
 
         .btn {
-            margin-top: 20px;
-            display: inline-block;
-            padding: 10px 15px;
-            background: #38bdf8;
-            color: black;
+            background: #22c55e;
+            color: #000;
             text-decoration: none;
-            border-radius: 8px;
+            padding: 12px 20px;
+            border-radius: 10px;
             font-weight: bold;
+            transition: .3s;
+
         }
 
         .btn:hover {
-            background: #0ea5e9;
+            background: #16a34a;
+            transform: translateY(-2px);
+
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            background: #111111;
+            border: 1px solid #1f2937;
+            padding: 25px;
+            border-radius: 18px;
+            position: relative;
+            overflow: hidden;
+            transition: .3s;
+
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 3px;
+            width: 100%;
+            background: #22c55e;
+        }
+
+
+
+
+        .card:hover {
+            border-color: #22c55e;
+            box-shadow: 0 0 25px rgba(34, 197, 94, .15);
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            color: #9ca3af;
+            font-size: 15px;
+            margin-bottom: 15px;
+        }
+
+        .value {
+            color: #22c55e;
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .description {
+
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .status {
+            margin-top: 35px;
+            padding: 18px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .positivo {
+            background: rgba(34, 197, 94, .15);
+            border: 1px solid #22c55e;
+            color: #4ade80;
+        }
+
+        .negativo {
+            background: rgba(239, 68, 68, .15);
+            border: 1px solid #ef4444;
+            color: #f87171;
+        }
+
+        @media(max-width:900px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media(max-width:600px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
         }
     </style>
 </head>
-
 <body>
 
-<div class="container">
 
-    <div class="card">
+    <div class="container">
 
-        <h1>📊 Relatório Mensal</h1>
 
-        <p class="subtitle">
-            Análise automática da performance da empresa
-        </p>
+        <div class="header">
 
-        <div class="box">
-            {{ relatorio }}
+            <div>
+
+                <h1>
+                    Relatório Mensal
+                </h1>
+
+                <div class="subtitle">
+                    Empresa: {{ company.name }}
+                </div>
+
+            </div>
+
+
+            <a href="/dashboard/" class="btn">
+                ← Dashboard
+            </a>
+
+
         </div>
 
-        <a href="/dashboard/" class="btn">⬅ Voltar ao Dashboard</a>
+
+
+
+        <div class="grid">
+
+
+
+            <div class="card">
+
+                <h3>
+                    Faturamento Atual
+                </h3>
+
+                <div class="value">
+                    R$ {{ dados.faturamento_atual|floatformat:2 }}
+                </div>
+
+                <div class="description">
+                    Receita deste mês
+                </div>
+
+            </div>
+
+
+
+
+
+            <div class="card">
+
+                <h3>
+                    Faturamento Anterior
+                </h3>
+
+                <div class="value">
+                    R$ {{ dados.faturamento_passado|floatformat:2 }}
+                </div>
+
+                <div class="description">
+                    Receita do mês passado
+                </div>
+
+            </div>
+
+
+
+
+
+            <div class="card">
+
+                <h3>
+                    Lucro
+                </h3>
+
+                <div class="value">
+                    R$ {{ dados.lucro|floatformat:2 }}
+                </div>
+
+                <div class="description">
+                    Faturamento - gastos
+                </div>
+
+            </div>
+
+
+
+
+
+            <div class="card">
+
+                <h3>
+                    Funcionários
+                </h3>
+
+                <div class="value">
+                    {{ dados.quantidade_funcionarios }}
+                </div>
+
+                <div class="description">
+                    Colaboradores cadastrados
+                </div>
+
+            </div>
+
+
+
+
+
+            <div class="card">
+
+                <h3>
+                    Gastos Atuais
+                </h3>
+
+                <div class="value">
+                    R$ {{ dados.gasto_atual|floatformat:2 }}
+                </div>
+
+                <div class="description">
+                    Despesas deste mês
+                </div>
+
+            </div>
+
+
+
+
+
+            <div class="card">
+
+                <h3>
+                    Gastos Anteriores
+                </h3>
+
+                <div class="value">
+                    R$ {{ dados.gasto_passado|floatformat:2 }}
+                </div>
+
+                <div class="description">
+                    Despesas do mês passado
+                </div>
+
+            </div>
+
+
+
+        </div>
+
+
+
+
+        <div class="
+        status
+        {% if dados.crescimento == 'Positivo' %}
+            positivo
+        {% elif dados.crescimento == 'Negativo' %}
+            negativo
+        {% endif %}
+    ">
+
+            Crescimento da empresa:
+            {{ dados.crescimento }}
+
+        </div>
+
+
+
 
     </div>
 
-</div>
 
 </body>
+
 </html>
