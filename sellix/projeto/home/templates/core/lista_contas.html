@@ -1,0 +1,143 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Contas | Sellix</title>
+    
+    <link rel="icon" href="{% static 'ico/favicon.ico' %}" type="image/x-icon">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0b0b0b;
+            color: white;
+        }
+
+        .header {
+            padding: 20px;
+            background: #111;
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title {
+            font-size: 22px;
+            color: rgb(0, 195, 0);
+        }
+
+        .container {
+            padding: 30px;
+        }
+
+        .card {
+            background: #151515;
+            border: 1px solid #222;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            background: rgb(0, 195, 0);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: rgb(0, 150, 0);
+        }
+
+        .info {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .top-bar {
+            margin-bottom: 20px;
+            color: #888;
+        }
+
+        h2 {
+            color: rgb(0, 195, 0);
+        }
+
+        .status-ativa {
+            color: rgb(0, 195, 0);
+            font-weight: bold;
+        }
+
+        .status-bloqueada {
+            color: #ff4444;
+            font-weight: bold;
+        }
+
+        .card-info {
+            flex-grow: 1;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <div class="title">🔒 Bloqueio de Contas</div>
+    <div class="info">
+        Admin: {{ user.username }}
+    </div>
+    <a href="{% url 'controle' %}">
+        <button class="btn">Voltar</button>
+    </a>
+</div>
+
+<div class="container">
+
+    <div class="top-bar">
+        Gerencie o acesso de contas cadastradas no sistema
+    </div>
+
+    {% for conta in contas %}
+
+        <div class="card">
+            <div class="card-info">
+                <strong>{{ conta.user.username }}</strong><br>
+                <span class="info">Empresa: {{ conta.company.name }}</span>
+            </div>
+
+            <div class="card-actions">
+                {% if conta.is_active %}
+                    <span class="status-ativa">✓ ATIVA</span>
+                {% else %}
+                    <span class="status-bloqueada">✗ BLOQUEADA</span>
+                {% endif %}
+
+                {% if not conta.user.is_superuser %}
+                    <a href="{% url 'toggle_conta' conta.id %}" class="btn">Alterar</a>
+                {% else %}
+                    <span class="info" style="padding: 8px 12px;">Superuser</span>
+                {% endif %}
+            </div>
+        </div>
+
+    {% endfor %}
+
+</div>
+
+</body>
+</html>

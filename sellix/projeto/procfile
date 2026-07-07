@@ -1,0 +1,1 @@
+web: gunicorn sellix.wsgi:application

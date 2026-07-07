@@ -1,0 +1,377 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ company.name }} | Dashboard</title>
+
+    <link rel="icon" href="{% static 'ico/favicon.ico' %}" type="image/x-icon">
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+
+    <style>
+        :root {
+            --bg: #050505;
+            --surface: #0f1114;
+            --surface-2: #16181d;
+            --text: #f5f7fa;
+            --muted: #9ca3af;
+            --accent: #00c34a;
+            --accent-dark: #00923a;
+            --border: rgba(255,255,255,0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            background: radial-gradient(circle at top left, #12141a 0%, var(--bg) 45%, #060606 100%);
+            color: var(--text);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: white;
+            padding: 24px 28px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 {
+            margin: 0 0 6px;
+            font-size: 1.8rem;
+        }
+
+        .header p {
+            margin: 0;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .container {
+            padding: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: rgba(15, 17, 20, 0.95);
+            padding: 18px;
+            margin: 16px 0;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+        }
+
+        .card h2 {
+            color: var(--accent);
+            margin-top: 0;
+            margin-bottom: 14px;
+            font-size: 1.2rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            margin: 6px 0;
+            border-radius: 10px;
+            border: 1px solid #2a2d33;
+            background: #111418;
+            color: white;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 195, 74, 0.12);
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            cursor: pointer;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+        }
+
+        .post {
+            background: white;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+
+        p {
+            color: var(--text);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        th {
+            color: #dfe3e8;
+            font-size: 0.9rem;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn-delete {
+            background: #c62828;
+            padding: 8px 10px;
+        }
+
+        .btn-delete:hover {
+            background: #a61f1f;
+        }
+
+        .chart-box {
+            margin-top: 16px;
+        }
+    </style>
+
+
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>{{ company.name }}</h1>
+        <p>Desenvolvedor: 81 994317883</p>
+    </div>
+
+    <div class="container">
+
+        <!-- EMPRESA (opcional futuro update) -->
+        <div class="card">
+            <h2>Sua empresa</h2>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="text" name="name" value="{{ company.name }}">
+                <button type="submit">Atualizar</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Relatório Mensal (IA)</h2>
+
+            <a href="{% url 'relatorio_mensal' company.id %}">
+                <button>Gerar relatório</button>
+            </a>
+        </div>
+
+        <div class="card">
+            <h2>Cotações em tempo real</h2>
+
+            <p><strong>Dólar:</strong> R$ {{ usd_price }}</p>
+            <p><strong>Euro:</strong> R$ {{ eur_price }}</p>
+        </div>
+
+        <!-- PRODUTOS -->
+        <div class="card">
+            <h2>Tabela de produtos</h2>
+
+            <form method="POST" action="{% url 'add_item' %}">
+                {% csrf_token %}
+
+                <input type="text" name="produto" placeholder="Nome do produto">
+                <input type="text" name="preco" placeholder="Preço">
+
+                <button type="submit">Adicionar</button>
+            </form>
+
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Produto</th>
+                    <th>Preço</th>
+                    <th></th>
+                </tr>
+
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.nome }}</td>
+                    <td>R$ {{ item.preco }}</td>
+                    <td>
+                        <form method="POST" action="{% url 'deletar_item' item.id %}">
+                            {% csrf_token %}
+                            <button class="btn-delete" type="submit">Deletar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <!-- FUNCIONÁRIOS -->
+        <div class="card">
+            <h2>Tabela de funcionários</h2>
+
+            <form method="POST" action="{% url 'add_funcionario' %}">
+                {% csrf_token %}
+
+                <input type="text" name="nome" placeholder="Nome funcionário">
+                <input type="text" name="cargo" placeholder="Cargo">
+
+                <button type="submit">Adicionar</button>
+            </form>
+
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Cargo</th>
+                    <th></th>
+                </tr>
+
+                {% for f in funcionarios %}
+                <tr>
+                    <td>{{ f.id }}</td>
+                    <td>{{ f.nome }}</td>
+                    <td>{{ f.cargo }}</td>
+                    <td>
+                        <form method="POST" action="{% url 'deletar_funcionario' f.id %}">
+                            {% csrf_token %}
+                            <button class="btn-delete" type="submit">Deletar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+
+        <div class="card">
+            <h2>Tabela de clientes</h2>
+
+            <form method="POST" action="{% url 'add_cliente' %}">
+                {% csrf_token %}
+
+                <input type="text" name="nome" placeholder="Nome do cliente">
+                <input type="text" name="contato" placeholder="Contato do cliente">
+
+                <button type="submit">Adicionar</button>
+            </form>
+
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Contato</th>
+                    <th></th>
+                </tr>
+
+                {% for c in clientes %}
+                <tr>
+                    <td>{{ c.id }}</td>
+                    <td>{{ c.nome }}</td>
+                    <td>{{ c.contato }}</td>
+                    <td>
+                        <form method="POST" action="{% url 'deletar_cliente' c.id %}">
+                            {% csrf_token %}
+                            <button class="btn-delete" type="submit">Deletar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <!-- Tabela de Vendas por Mês -->
+        <div class="card">
+            <h2>Tabela de Valores do Mês</h2>
+
+            <form method="POST" action="{% url 'add_venda' %}">
+                {% csrf_token %}
+
+                <input type="text" name="valor" placeholder="Digite o valor do Mês: ">
+                <input type="text" name="mes" placeholder="Digite a data: AAAA-MM-DD">
+                <input type="text" name="gastos" placeholder="Digite o valor de gastos do mês: ">
+
+                <button type="submit">Adicionar</button>
+            </form>
+
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Valor</th>
+                    <th>Mês</th>
+                    <th></th>
+                </tr>
+
+                {% for v in vendas %}
+                <tr>
+                    <td>{{ v.id }}</td>
+                    <td>R$ {{ v.valor }}</td>
+                    <td>{{ v.data }}</td>
+                    <td>
+                        <form method="POST" action="{% url 'deletar_venda' v.id %}">
+                            {% csrf_token %}
+                            <button class="btn-delete" type="submit">Deletar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <div class="chart-box">
+                <h2>Gráfico de Vendas por Mês</h2>
+                <canvas id="grafico"></canvas>
+
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+                <script>
+                    const ctx = document.getElementById('grafico');
+
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: JSON.parse('{{ labels|escapejs }}'),
+                            datasets: [{
+                                label: 'Vendas',
+                                data: JSON.parse('{{ values|escapejs }}'),
+                                borderColor: 'blue',
+                                fill: false
+                            }, {
+                                label: 'Gastos',
+                                data: JSON.parse('{{ gastos|escapejs }}'),
+                                borderColor: 'red',
+                                fill: false,
+                                borderWidth: 2
+                            }]
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+
+    </div>
+
+
+</body>
+
+</html>
