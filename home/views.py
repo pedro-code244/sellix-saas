@@ -418,7 +418,7 @@ def toggle_conta(request, id):
 def relatorio_mensal(request, company_id):
     company = get_object_or_404(Company, id=company_id)
 
-    url = f"http://localhost:8000/api/relatorio/{company.id}/"
+    url = f"https://sellix-saas.onrender.com/api/relatorio/{company.id}/"
 
     resposta = requests.get(url)
 
