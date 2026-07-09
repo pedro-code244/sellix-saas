@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-a=n=ux9fs!fnx&5te_abe)_=m0#yyz@mz1m-75-(_nn+*9vti^'
 
 # segurança no deploy
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -37,7 +37,7 @@ ALLOWED_HOSTS = [
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://*.onrender.com"
+    "https://sellix-saas.onrender.com"
 ]
 # segurança no login
 LOGIN_URL = '/login/'
