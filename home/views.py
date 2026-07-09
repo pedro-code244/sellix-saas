@@ -5,14 +5,16 @@ from django.contrib.auth.models import User
 import yfinance as yf
 import json
 from django.db.models import Sum
+from django.db.models import F, ExpressionWrapper, DecimalField
+from decimal import Decimal, InvalidOperation
 from django.utils.timezone import now
 from datetime import timedelta
 from rest_framework.decorators import api_view 
 from rest_framework.response import Response
 import requests
+from django.urls import reverse
 
-
-from .models import Company, Funcionario, Membership, TableItem, Venda, Cliente
+from .models import Company, Funcionario, Membership, TableItem, Venda, Cliente, NewVenda
 
 
 # -----------------------
@@ -209,6 +211,37 @@ def dashboard(request):
         
     })
 
+@login_required
+def vendas(request):
+    membership = Membership.objects.filter(user=request.user).first()
+
+    company = membership.company
+
+    vendas_qs = NewVenda.objects.filter(company=company)
+
+    # Contagem total de vendas (registros)
+    vendas_count = vendas_qs.count()
+
+    # Calcular soma do total vendido em Python para evitar variação entre DBs
+    vendas_total = Decimal('0.00')
+    for v in vendas_qs:
+        try:
+            item_total = (v.valor_venda or Decimal('0.00')) * (v.quantidade or 0)
+        except Exception:
+            item_total = Decimal('0.00')
+        # anexa atributo para uso no template
+        setattr(v, 'total', item_total)
+        vendas_total += item_total
+
+
+    return render(request, "core/vendas.html", {
+        "vendas": vendas_qs,
+        "vendas_count": vendas_count,
+        "vendas_total": vendas_total,
+    })
+
+
+
 # -----------------------
 # PRODUTOS
 # -----------------------
@@ -284,38 +317,32 @@ def deletar_funcionario(request, id):
 
 @login_required
 def add_venda(request):
-
     if request.method == "POST":
-
         membership = Membership.objects.filter(user=request.user).first()
         if not membership:
             return redirect('dashboard')
 
         company = membership.company
 
-        valor = request.POST.get("valor")
-        mes = request.POST.get("mes")
-        gastos = request.POST.get("gastos")
-
-        if valor and mes:
-            Venda.objects.create(
+        # Se recebeu dados de nova venda (página "vendas")
+        produto = request.POST.get('produto')
+        if produto:
+            quantidade = request.POST.get('quantidade') or 1
+            valor_venda = request.POST.get('valor_venda') or 0
+            forma_pagamento = request.POST.get('forma_pagamento') or ''
+            
+            NewVenda.objects.create(
                 company=company,
-                valor=float(valor),
-                data=mes,
-                gastos=float(gastos),
+                produto=produto,
+                quantidade=quantidade,
+                valor_venda=valor_venda,
+                forma_pagamento=forma_pagamento
             )
+            return redirect("vendas")
 
-    return redirect("dashboard")
-
-def deletar_venda(request, id):
-    venda = get_object_or_404(Venda, id=id)
-    venda.delete()
-    return redirect('dashboard')
-
-
-
-
-
+# -----------------------
+# CLIENTES
+# -----------------------
 @login_required
 def add_cliente(request):
 
@@ -418,7 +445,9 @@ def toggle_conta(request, id):
 def relatorio_mensal(request, company_id):
     company = get_object_or_404(Company, id=company_id)
 
-    url = f"https://sellix-saas.onrender.com/api/relatorio/{company.id}/"
+    url = request.build_absolute_uri(
+    reverse("api_relatorio", kwargs={"company_id": company_id})
+)
 
     resposta = requests.get(url)
 
