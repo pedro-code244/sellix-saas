@@ -9,7 +9,8 @@ from django.db.models import F, ExpressionWrapper, DecimalField
 from decimal import Decimal, InvalidOperation
 from django.utils.timezone import now
 from datetime import timedelta
-from rest_framework.decorators import api_view 
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 import requests
 from django.urls import reverse
@@ -448,7 +449,7 @@ def relatorio_mensal(request, company_id):
     url = request.build_absolute_uri(
     reverse("api_relatorio", kwargs={"company_id": company_id})
 )
-
+    
     resposta = requests.get(url)
 
     relatorio = resposta.json()
@@ -460,9 +461,23 @@ def relatorio_mensal(request, company_id):
 # -----------------------
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def api_relatorio_mensal(request, company_id):
-    company = get_object_or_404(Company, id=company_id)
-    
+
+    company = get_object_or_404(
+        Company,
+        id=company_id
+    )
+    possui_acesso = Membership.objects.filter(
+        user=request.user,
+        company=company
+    ).exists()
+
+    if not possui_acesso:
+        return Response(
+            {"erro": "Você não tem acesso a essa empresa"},
+            status=403
+        )
     vendas = Venda.objects.filter(company=company)
     funcionarios = Funcionario.objects.filter(company=company)
     quantidade_funcionarios = funcionarios.count()
