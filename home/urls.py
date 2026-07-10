@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import add_funcionario, api_relatorio_mensal, bloqueio, deletar_funcionario, index, lista_contas, modulos, login_view, cadastro, controle, deletar_usuario, dashboard, politica, add_item, add_venda, deletar_item, relatorio_mensal, add_cliente, deletar_cliente, toggle_conta, sellix, vendas
+from .views import add_funcionario, bloqueio, deletar_funcionario, index, lista_contas, modulos, login_view, cadastro, controle, deletar_usuario, dashboard, politica, add_item, add_venda, deletar_item, relatorio_mensal, add_cliente, deletar_cliente, toggle_conta, sellix, vendas
 
 
 urlpatterns = [
@@ -24,6 +24,5 @@ urlpatterns = [
     path("relatorio/<int:company_id>/", relatorio_mensal, name="relatorio_mensal"),
     path('contas/', lista_contas, name='lista_contas'),
     path('contas/toggle/<int:id>/', toggle_conta, name='toggle_conta'),
-    path('api/relatorio/<int:company_id>/', api_relatorio_mensal, name='api_relatorio'),
     path('vendas/', vendas, name='vendas'),
 ]

@@ -5,15 +5,14 @@ from django.contrib.auth.models import User
 import yfinance as yf
 import json
 from django.db.models import Sum
-from django.db.models import F, ExpressionWrapper, DecimalField
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 from django.utils.timezone import now
 from datetime import timedelta
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-import requests
-from django.urls import reverse
+from django.contrib.auth.hashers import make_password
+
 
 from .models import Company, Funcionario, Membership, TableItem, Venda, Cliente, NewVenda
 
@@ -109,7 +108,7 @@ def cadastro(request):
 
         user = User.objects.create_user(
             username=username,
-            password=password
+            password=make_password(password)
         )
 
         company = Company.objects.create(
@@ -444,26 +443,6 @@ def toggle_conta(request, id):
 
 @login_required
 def relatorio_mensal(request, company_id):
-    company = get_object_or_404(Company, id=company_id)
-
-    url = request.build_absolute_uri(
-    reverse("api_relatorio", kwargs={"company_id": company_id})
-)
-    
-    resposta = requests.get(url)
-
-    relatorio = resposta.json()
-    return render(request, "core/relatorio.html", {"company": company, "dados": relatorio})
-
-
-# -----------------------
-#         APIs
-# -----------------------
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def api_relatorio_mensal(request, company_id):
-
     company = get_object_or_404(
         Company,
         id=company_id
@@ -551,4 +530,43 @@ def api_relatorio_mensal(request, company_id):
         "lucro": lucro,
     }
     
-    return Response(relatorio)
+    
+    return render(request, "core/relatorio.html", {"company": company, "dados": relatorio})
+
+
+# -----------------------
+#         APIs
+# -----------------------
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_relatorio_mensal(request, company_id):
+
+    # Seguraça no acesso da API
+    company = get_object_or_404(
+        Company,
+        id=company_id
+    )
+
+    possui_acesso = Membership.objects.filter(
+        user=request.user,  
+        company=company 
+    ).exists()
+
+    if not possui_acesso:
+        return Response(
+            {"erro": "Você não tem acesso a essa empresa"},
+            status=403
+        )
+    
+    # Dados: 
+
+    dados = {
+        "nome": "pedro", 
+        "idade": 13
+    }
+
+    # Falta a URL 
+
+    
+    return Response(dados)
